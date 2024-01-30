@@ -51,9 +51,10 @@ def index_temp(job_path: Path, temp_path: Path):
         '.kss': 'KSS',
     }
 
-    for file in temp_path.iterdir():
-        if file.suffix.lower() in extension_to_folder:
-            move_files(temp_path, job_path / extension_to_folder[file.suffix.lower()], [file.suffix.lower()])
+    for file in temp_path.rglob('*'):
+        if file.is_file() and file.suffix.lower() in extension_to_folder:
+            print(f"Moving '{file.suffix.lower()}' files to '{extension_to_folder[file.suffix.lower()]}'...")
+            move_files(file.parents[0], job_path / extension_to_folder[file.suffix.lower()], [file.suffix.lower()])
 
     (job_path / 'ARCHIVE').mkdir(parents=True, exist_ok=True)
     shutil.copytree(temp_path, job_path / 'ARCHIVE', dirs_exist_ok=True)
@@ -86,19 +87,21 @@ def organize_job(job_path: Path, subfolders_list):
 
     for file in job_path.iterdir():
         if file.suffix.lower() in extension_to_folder:
+            print(f"Moving '{file.suffix.lower()}' files to '{extension_to_folder[file.suffix.lower()]}'...")
             move_files(job_path, job_path / extension_to_folder[file.suffix.lower()], [file.suffix.lower()])
 
     for folder in job_path.iterdir():
         if folder.is_dir() and folder.name not in subfolders_list:
             for file in folder.iterdir():
                 if file.suffix.lower() in extension_to_folder:
+                    print(f"Moving '{file.suffix.lower()}' files to '{extension_to_folder[file.suffix.lower()]}'...")
                     move_files(folder, job_path / extension_to_folder[file.suffix.lower()], [file.suffix.lower()])
             shutil.move(str(folder), str(job_path / 'temp'))
 
 def main(subfolders_list):
     spreadsheet_path = Path('data/workschedule.xlsx')
     workbook = load_workbook(spreadsheet_path)
-    base_directory = Path('Y:/02 JOB FILES')
+    base_directory = Path('temp')
 
     client_column = 0
     job_column = 1
@@ -106,8 +109,11 @@ def main(subfolders_list):
     sheet = workbook.active
 
     for row in sheet.iter_rows(min_row=2, values_only=True):
-        client_name = row[client_column]
+        client_name = row[client_column] 
         job_name = row[job_column] or "Reserve"
+
+        if client_name is None:
+            break
 
         client_folder = base_directory / client_name.strip()
         job_folder = client_folder / job_name
@@ -121,8 +127,9 @@ def main(subfolders_list):
                 client_folder = base_directory / existing_client
                 job_folder = client_folder / job_name
 
+        print(f"Creating job folder '{job_folder}'...")
         create_folders(job_folder, subfolders_list)
-
+        print(f"Organizing job '{job_folder}'...")
         organize_job(job_folder, subfolders_list)
 
 if __name__ == "__main__":
