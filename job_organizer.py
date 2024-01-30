@@ -4,20 +4,18 @@ import zipfile
 from concurrent.futures import ThreadPoolExecutor
 from openpyxl import load_workbook
 from tqdm import tqdm
+from pathlib import Path
 
-subfolers_list = ['CNC','DRAWINGS','EXCEL FILES', 'KSS','SHIPPING AND BILLING','ZIP FILES', 'temp', 'ARCHIVE']
+subfolders_list = ['CNC','DRAWINGS','EXCEL FILES', 'KSS','SHIPPING AND BILLING','ZIP FILES', 'temp', 'ARCHIVE']
 
-def create_folders(job_path, subfolders_list): # function to create a subfolder within given job directory
+def create_folders(job_path: Path, subfolders_list):
     for subfolder in subfolders_list:
-        subfolder_path = os.path.join(job_path, subfolder)
-        if not os.path.exists(subfolder_path):
-            os.makedirs(subfolder_path)
+        (job_path / subfolder).mkdir(parents=True, exist_ok=True)
 
-def extract_zip_archive_with_progress(archived_path, job_path, pbar):
-    temp_folder = os.path.join(job_path, 'temp')
-    if not os.path.exists(temp_folder):
-        os.makedirs(temp_folder)
-    total_size = os.path.getsize(archived_path)
+def extract_zip_archive_with_progress(archived_path: Path, job_path: Path, pbar):
+    temp_folder = job_path / 'temp'
+    temp_folder.mkdir(parents=True, exist_ok=True)
+    total_size = archived_path.stat().st_size
     extracted_size = 0
 
     def update_progress(extracted_size):
@@ -31,64 +29,77 @@ def extract_zip_archive_with_progress(archived_path, job_path, pbar):
                     extracted_size += member.file_size
                     update_progress(extracted_size)
 
-def move_files(source, destination, extensions):
-    for file in os.listdir(source):
-        if any(file.lower().endswith(ext) for ext in extensions):
-            shutil.move(os.path.join(source, file), os.path.join(destination, file))
+def move_files(source: Path, destination: Path, extensions):
+    for file in source.iterdir():
+        if file.suffix.lower() in extensions:
+            shutil.move(str(file), str(destination / file.name))
 
-def index_temp(job_path, temp_path):
-    for dirpath in os.walk(temp_path):
-            move_files(dirpath, os.path.join(job_path, 'CNC'), ['.nc1', '.cnc', '.step', '.stp', '.dxf'])
-            move_files(dirpath, os.path.join(job_path, 'DRAWINGS'), ['.pdf'])
-            move_files(dirpath, os.path.join(job_path, 'ZIP FILES'), ['.zip', '.rar'])
-            move_files(dirpath, os.path.join(job_path, 'SHIPPING AND BILLING'), ['master'])
-            move_files(dirpath, os.path.join(job_path, 'EXCEL FILES'), ['.xlsx', '.xlsm', '.xls'])
-            move_files(dirpath, os.path.join(job_path, 'KSS'), ['.kss'])
+def index_temp(job_path: Path, temp_path: Path):
+    extension_to_folder = {
+        '.nc1': 'CNC',
+        '.cnc': 'CNC',
+        '.step': 'CNC',
+        '.stp': 'CNC',
+        '.dxf': 'CNC',
+        '.pdf': 'DRAWINGS',
+        '.zip': 'ZIP FILES',
+        '.rar': 'ZIP FILES',
+        'master': 'SHIPPING AND BILLING',
+        '.xlsx': 'EXCEL FILES',
+        '.xlsm': 'EXCEL FILES',
+        '.xls': 'EXCEL FILES',
+        '.kss': 'KSS',
+    }
 
-    if not os.path.exists(os.path.join(job_path, 'ARCHIVE')):
-        os.makedirs(os.path.join(job_path, 'ARCHIVE'))
-    shutil.copytree(temp_path, os.path.join(job_path, 'ARCHIVE'), dirs_exist_ok=True)
+    for file in temp_path.iterdir():
+        if file.suffix.lower() in extension_to_folder:
+            move_files(temp_path, job_path / extension_to_folder[file.suffix.lower()], [file.suffix.lower()])
+
+    (job_path / 'ARCHIVE').mkdir(parents=True, exist_ok=True)
+    shutil.copytree(temp_path, job_path / 'ARCHIVE', dirs_exist_ok=True)
     shutil.rmtree(temp_path)
 
-def organize_job(job_path, subfolders_list):
-    for file in os.listdir(job_path):
-        file_path = os.path.join(job_path, file)
-        if os.path.isfile(file_path):
-            if file.lower().endswith(('.zip','.rar')):
-                print(f"Extracting '{file}'...")
-                with tqdm(total=100, unit="B", unit_scale=True) as pbar:
-                    extract_zip_archive_with_progress(file_path, job_path, pbar)
+def organize_job(job_path: Path, subfolders_list):
+    extension_to_folder = {
+        '.nc1': 'CNC',
+        '.cnc': 'CNC',
+        '.step': 'CNC',
+        '.stp': 'CNC',
+        '.dxf': 'CNC',
+        '.pdf': 'DRAWINGS',
+        '.zip': 'ZIP FILES',
+        '.rar': 'ZIP FILES',
+        'master': 'SHIPPING AND BILLING',
+        '.xlsx': 'EXCEL FILES',
+        '.xlsm': 'EXCEL FILES',
+        '.xls': 'EXCEL FILES',
+        '.kss': 'KSS',
+    }
 
-    index_temp(job_path, os.path.join(job_path,'temp'))
+    for file in job_path.iterdir():
+        if file.is_file() and file.suffix.lower() in ['.zip', '.rar']:
+            print(f"Extracting '{file.name}'...")
+            with tqdm(total=100, unit="B", unit_scale=True) as pbar:
+                extract_zip_archive_with_progress(file, job_path, pbar)
 
-    move_files(job_path, os.path.join(job_path, 'CNC'), ['.nc1', '.cnc', '.step', '.stp', '.dxf'])
-    move_files(job_path, os.path.join(job_path, 'DRAWINGS'), ['.pdf'])
-    move_files(job_path, os.path.join(job_path, 'ZIP FILES'), ['.zip', '.rar'])
-    move_files(job_path, os.path.join(job_path, 'SHIPPING AND BILLING'), ['master'])
-    move_files(job_path, os.path.join(job_path, 'EXCEL FILES'), ['.xlsx', '.xlsm', '.xls'])
-    move_files(job_path, os.path.join(job_path, 'KSS'), ['.kss'])
-    
-    for folder in os.listdir(job_path):
-            folder_path = os.path.join(job_path, folder)
-            if os.path.isdir(folder_path) and folder not in subfolders_list:
-                for file in os.listdir(folder_path):
-                    file_path = os.path.join(folder_path, file)
-                    if os.path.isfile(file_path):
-                        move_files(folder_path, os.path.join(job_path, 'DRAWINGS'), ['.pdf'])
-                        move_files(folder_path, os.path.join(job_path, 'ZIP FILES'), ['.zip', '.rar'])
-                        move_files(folder_path, os.path.join(job_path, 'SHIPPING AND BILLING'), ['master'])
-                        move_files(folder_path, os.path.join(job_path, 'EXCEL FILES'), ['.xlsx', '.xlsm', '.xls'])
-                        move_files(folder_path, os.path.join(job_path, 'CNC'), ['.nc1', '.cnc', '.step', '.stp', '.dxf'])
-                        move_files(folder_path, os.path.join(job_path, 'KSS'), ['.kss'])
-                shutil.move(folder_path,os.path.join(job_path,'temp'))
-        
+    index_temp(job_path, job_path / 'temp')
+
+    for file in job_path.iterdir():
+        if file.suffix.lower() in extension_to_folder:
+            move_files(job_path, job_path / extension_to_folder[file.suffix.lower()], [file.suffix.lower()])
+
+    for folder in job_path.iterdir():
+        if folder.is_dir() and folder.name not in subfolders_list:
+            for file in folder.iterdir():
+                if file.suffix.lower() in extension_to_folder:
+                    move_files(folder, job_path / extension_to_folder[file.suffix.lower()], [file.suffix.lower()])
+            shutil.move(str(folder), str(job_path / 'temp'))
+
 def main(subfolders_list):
-    spreadsheet_path = 'data/workschedule.xlsx'
+    spreadsheet_path = Path('data/workschedule.xlsx')
     workbook = load_workbook(spreadsheet_path)
-    base_directory = 'Y:/'
-    base_folder = os.path.join(base_directory, '02 JOB FILES')
-    
-    # Assuming your spreadsheet has columns named 'Client' and 'Job'
+    base_directory = Path('Y:/02 JOB FILES')
+
     client_column = 0
     job_column = 1
 
@@ -96,29 +107,23 @@ def main(subfolders_list):
 
     for row in sheet.iter_rows(min_row=2, values_only=True):
         client_name = row[client_column]
-        job_name = row[job_column]
-        
-        if client_name is None:
-                break
-        
-        if job_name is None:
-            job_name = "Reserve"
-        
-        client_folder = os.path.join(base_folder, client_name.strip())
-        job_folder = os.path.join(client_folder, job_name)
+        job_name = row[job_column] or "Reserve"
 
-        if not os.path.exists(client_folder):
+        client_folder = base_directory / client_name.strip()
+        job_folder = client_folder / job_name
+
+        if not client_folder.exists():
             response = input(f"Do you want to create a new folder for client '{client_name}'? (yes/no): ")
             if response.lower() == 'yes':
-                os.makedirs(client_folder)
+                client_folder.mkdir(parents=True, exist_ok=True)
             else:
                 existing_client = input("Enter the name of an existing client: ")
-                client_folder = os.path.join(base_folder, existing_client)
-                job_folder = os.path.join(client_folder, job_name)
+                client_folder = base_directory / existing_client
+                job_folder = client_folder / job_name
 
         create_folders(job_folder, subfolders_list)
 
         organize_job(job_folder, subfolders_list)
 
 if __name__ == "__main__":
-    main(subfolers_list)
+    main(subfolders_list)
