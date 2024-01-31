@@ -92,5 +92,9 @@ def main():
             edit_nc1(nc1_filepath, kss_line_data) 
             print("EDITED: "+nc1_file)
 
+    print("EDITING COMPLETE.")
+    input("Press any key to exit.")
+    exit()
+
 if __name__ == "__main__":
     main()
