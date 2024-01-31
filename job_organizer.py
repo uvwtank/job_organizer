@@ -101,7 +101,7 @@ def organize_job(job_path: Path, subfolders_list):
 def main(subfolders_list):
     spreadsheet_path = Path('data/workschedule.xlsx')
     workbook = load_workbook(spreadsheet_path)
-    base_directory = Path('temp')
+    base_directory = Path('Y:/02 Job Files')
 
     client_column = 0
     job_column = 1
