@@ -22,11 +22,13 @@ def ref_kss(kss_path):
             kss_dir = os.path.dirname(kss_path)
             if len(os.listdir(kss_dir)) > 1:
                 print("More than one .kss file found in directory. Please remove any unwanted .kss files and try again.")
+                input("Press any key to exit.")
                 exit()
             for file in os.listdir(kss_dir):
                 if file.endswith(".kss"):
                     shutil.copy(os.path.join(kss_dir, file), kss_path)
                     print(f"Created 'kss combined.kss' in {kss_dir} from existing kss file. Run program again.")
+                    input("Press any key to exit.")
                     exit()
         else:
             print("No .kss file copied.")
