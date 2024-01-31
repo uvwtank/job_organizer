@@ -1,6 +1,7 @@
 # Test program for editting NC1 files. In order to work this file must be deposited into job subfolder.
 import os
 import sys
+import shutil
 
 # Opens target kss file and stores information by line as lists, it then packages these lists into a larger list
 def ref_kss(kss_path):
@@ -8,7 +9,6 @@ def ref_kss(kss_path):
     try:
         with open(kss_path, 'r') as kss_file:
             kss_data = kss_file.readlines()
-            # print(kss_data)
 
             for kss_line in kss_data:
                 kss_lines = [kss_line.split(',')]
@@ -17,6 +17,19 @@ def ref_kss(kss_path):
         return kss_line_data
     except FileNotFoundError:
         print(f"{kss_path} NOT FOUND.")
+        answer = input("Would you like to use the kss file located in the KSS folder? (yes/no): ")
+        if answer.lower() == "yes":
+            kss_dir = os.path.dirname(kss_path)
+            if len(os.listdir(kss_dir)) > 1:
+                print("More than one .kss file found in directory. Please remove any unwanted .kss files and try again.")
+                exit()
+            for file in os.listdir(kss_dir):
+                if file.endswith(".kss"):
+                    shutil.copy(os.path.join(kss_dir, file), kss_path)
+                    print(f"Created 'kss combined.kss' in {kss_dir} from existing kss file. Run program again.")
+                    exit()
+        else:
+            print("No .kss file copied.")
 
 # Opens target nc1 file and replaces line 5 value with a value cross referenced from kss file
 def edit_nc1(nc1_path, kss_line_data):
