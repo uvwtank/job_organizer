@@ -60,6 +60,13 @@ def index_temp(job_path: Path, temp_path: Path):
     shutil.copytree(temp_path, job_path / 'ARCHIVE', dirs_exist_ok=True)
     shutil.rmtree(temp_path)
 
+def copy_exe_to_job_folder(job_path: Path):
+    exe_source = Path('dist/nc1_drawing_remarks.exe')
+    if exe_source.exists():
+        shutil.copy(exe_source, job_path)
+    else:
+        print(f"Executable file '{exe_source}' not found.")
+        
 def organize_job(job_path: Path, subfolders_list):
     extension_to_folder = {
         '.nc1': 'CNC',
@@ -97,6 +104,9 @@ def organize_job(job_path: Path, subfolders_list):
                     print(f"Moving '{file.suffix.lower()}' files to '{extension_to_folder[file.suffix.lower()]}'...")
                     move_files(folder, job_path / extension_to_folder[file.suffix.lower()], [file.suffix.lower()])
             shutil.move(str(folder), str(job_path / 'temp'))
+    
+    print(f"Copying 'nc1_drawing_remarks.exe' to '{job_path}'...")
+    copy_exe_to_job_folder(job_path)
 
 def main(subfolders_list):
     spreadsheet_path = Path('data/workschedule.xlsx')
