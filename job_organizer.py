@@ -63,7 +63,7 @@ def index_temp(job_path: Path, temp_path: Path):
 def copy_exe_to_job_folder(job_path: Path):
     exe_source = Path('dist/nc1_drawing_remarks.exe')
     if exe_source.exists():
-        shutil.copy(exe_source, job_path, exists_ok=True)
+        shutil.copy(exe_source, job_path)
     else:
         print(f"Executable file '{exe_source}' not found.")
 
