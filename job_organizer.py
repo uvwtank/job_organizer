@@ -1,4 +1,5 @@
-import os
+import gspread
+from oauth2client.service_account import ServiceAccountCredentials
 import shutil
 import zipfile
 from concurrent.futures import ThreadPoolExecutor
@@ -109,16 +110,23 @@ def organize_job(job_path: Path, subfolders_list):
     copy_exe_to_job_folder(job_path)
 
 def main(subfolders_list):
-    spreadsheet_path = Path('data/workschedule.xlsx')
-    workbook = load_workbook(spreadsheet_path)
+    scope = ['https://spreadsheets.google.com/feeds',
+             'https://www.googleapis.com/auth/drive']
+    creds = ServiceAccountCredentials.from_json_keyfile_name('credentials.json', scope)
+    client = gspread.authorize(creds)
+
+    # Open the Google Sheets document
+    sheet = client.open("SCHEDULE BOARD").sheet1
+
     base_directory = Path('Y:/02 Job Files')
 
     client_column = 0
     job_column = 1
 
-    sheet = workbook.active
+    # Get all values from the sheet
+    rows = sheet.get_all_values()
 
-    for row in sheet.iter_rows(min_row=2, values_only=True):
+    for row in rows[1:]:  # Skip the header row
         client_name = row[client_column] 
         job_name = row[job_column] or "Reserve"
 
