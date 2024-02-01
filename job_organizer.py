@@ -2,6 +2,7 @@ import gspread
 from oauth2client.service_account import ServiceAccountCredentials
 import shutil
 import zipfile
+import datetime
 from concurrent.futures import ThreadPoolExecutor
 from openpyxl import load_workbook
 from tqdm import tqdm
@@ -112,23 +113,40 @@ def organize_job(job_path: Path, subfolders_list):
 def main(subfolders_list):
     scope = ['https://spreadsheets.google.com/feeds',
              'https://www.googleapis.com/auth/drive']
-    creds = ServiceAccountCredentials.from_json_keyfile_name('credentials.json', scope)
+    creds = ServiceAccountCredentials.from_json_keyfile_name('client_secrets.json', scope)
     client = gspread.authorize(creds)
 
     # Open the Google Sheets document
     sheet = client.open("SCHEDULE BOARD").sheet1
 
-    base_directory = Path('Y:/02 Job Files')
+    base_directory = Path('temp')
 
     client_column = 0
     job_column = 1
+    due_date_column = 3
+    bill_status_colulmn = 11
+
+    # Get the current date and the date for the start of the week
+    now = datetime.datetime.now()
+    start_of_week = now - datetime.timedelta(days=now.weekday())
 
     # Get all values from the sheet
     rows = sheet.get_all_values()
 
     for row in rows[1:]:  # Skip the header row
-        client_name = row[client_column] 
-        job_name = row[job_column] or "Reserve"
+        try:
+            due_date = datetime.datetime.strptime(row[due_date_column], '%m/%d/%Y')  or datetime.datetime.now()
+        except ValueError:
+            due_date = datetime.datetime.now()
+        client_name = row[client_column].strip() 
+        job_name = row[job_column].strip() or "Reserve"
+        bill_status = row[bill_status_colulmn].strip() or " "
+
+        if bill_status.lower() == "billed":
+            continue
+
+        if due_date <= start_of_week:
+            continue
 
         if client_name is None:
             break
