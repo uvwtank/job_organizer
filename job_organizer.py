@@ -119,7 +119,7 @@ def main(subfolders_list):
     # Open the Google Sheets document
     sheet = client.open("SCHEDULE BOARD").sheet1
 
-    base_directory = Path('temp')
+    base_directory = Path('Y:/02 Job Files')  # Change this to the base directory where the client folders are located
 
     client_column = 0
     job_column = 1
