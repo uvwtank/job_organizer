@@ -23,7 +23,7 @@ def extract_zip_archive_with_progress(archived_path: Path, job_path: Path, pbar)
         pbar.update(progress - pbar.n)
 
     with zipfile.ZipFile(archived_path, 'r') as zip_ref:
-        with ThreadPoolExecutor(max_workers = 200) as exe:
+        with ThreadPoolExecutor(max_workers = 300) as exe:
             for member in zip_ref.infolist():
                     exe.submit(zip_ref.extract, member, temp_folder)
                     extracted_size += member.file_size
