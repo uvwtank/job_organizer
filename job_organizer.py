@@ -121,10 +121,10 @@ def main(subfolders_list):
 
     base_directory = Path('Y:/02 Job Files')  # Change this to the base directory where the client folders are located
 
-    client_column = 0
-    job_column = 1
-    due_date_column = 3
-    bill_status_colulmn = 11
+    client_column = 0   # Change this to the column number where the client name is located
+    job_column = 1  # Change this to the column number where the job name is located
+    due_date_column = 3 # Change this to the column number where the due date is located
+    bill_status_colulmn = 11 # Change this to the column number where the bill status is located
 
     # Get the current date and the date for the start of the week
     now = datetime.datetime.now()
