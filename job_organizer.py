@@ -168,5 +168,8 @@ def main(subfolders_list):
         print(f"Organizing job '{job_folder}'...")
         organize_job(job_folder, subfolders_list)
 
+    print("Done.")
+    input("Press Enter to exit...")
+
 if __name__ == "__main__":
     main(subfolders_list)
