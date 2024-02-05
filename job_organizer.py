@@ -1,3 +1,4 @@
+#! python3
 import gspread
 from oauth2client.service_account import ServiceAccountCredentials
 import shutil
@@ -47,6 +48,7 @@ def index_temp(job_path: Path, temp_path: Path):
         '.zip': 'ZIP FILES',
         '.rar': 'ZIP FILES',
         'master': 'SHIPPING AND BILLING',
+        'billing': 'SHIPPING AND BILLING',
         '.xlsx': 'EXCEL FILES',
         '.xlsm': 'EXCEL FILES',
         '.xls': 'EXCEL FILES',
@@ -80,6 +82,7 @@ def organize_job(job_path: Path, subfolders_list):
         '.zip': 'ZIP FILES',
         '.rar': 'ZIP FILES',
         'master': 'SHIPPING AND BILLING',
+        'billing': 'SHIPPING AND BILLING',
         '.xlsx': 'EXCEL FILES',
         '.xlsm': 'EXCEL FILES',
         '.xls': 'EXCEL FILES',

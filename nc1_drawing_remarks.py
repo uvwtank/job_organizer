@@ -1,3 +1,4 @@
+#! python3
 # Test program for editting NC1 files. In order to work this file must be deposited into job subfolder.
 import os
 import sys
@@ -12,7 +13,7 @@ def ref_kss(kss_path):
 
             for kss_line in kss_data:
                 kss_lines = [kss_line.split(',')]
-                kss_line_data = kss_line_data+kss_lines
+                kss_line_data += kss_lines
 
         return kss_line_data
     except FileNotFoundError:
