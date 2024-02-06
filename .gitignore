@@ -3,3 +3,5 @@ client_secrets.json
 _credentials.json 
 token.json 
 credentials.json
+quickstart.py
+HelloAnalytics.py
