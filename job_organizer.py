@@ -8,14 +8,16 @@ from concurrent.futures import ThreadPoolExecutor
 from openpyxl import load_workbook
 from tqdm import tqdm
 from pathlib import Path
+from pyunpack import Archive
+import shutil
 
-subfolders_list = ['CNC','DRAWINGS','EXCEL FILES', 'KSS','SHIPPING AND BILLING','ZIP FILES', 'temp', 'ARCHIVE']
+subfolders_list = ['CNC','DRAWINGS','EXCEL FILES', 'KSS','SHIPPING AND BILLING','ZIP FILES', 'temp', 'ARCHIVE', 'MATERIAL']
 
 def create_folders(job_path: Path, subfolders_list):
     for subfolder in subfolders_list:
         (job_path / subfolder).mkdir(parents=True, exist_ok=True)
 
-def extract_zip_archive_with_progress(archived_path: Path, job_path: Path, pbar):
+def extract_archive_with_progress(archived_path: Path, job_path: Path, pbar):
     temp_folder = job_path / 'temp'
     temp_folder.mkdir(parents=True, exist_ok=True)
     total_size = archived_path.stat().st_size
@@ -25,12 +27,19 @@ def extract_zip_archive_with_progress(archived_path: Path, job_path: Path, pbar)
         progress = (extracted_size/ total_size) * 100
         pbar.update(progress - pbar.n)
 
-    with zipfile.ZipFile(archived_path, 'r') as zip_ref:
-        with ThreadPoolExecutor(max_workers = 200) as exe:
-            for member in zip_ref.infolist():
-                    exe.submit(zip_ref.extract, member, temp_folder)
-                    extracted_size += member.file_size
-                    update_progress(extracted_size)
+        if archived_path.suffix.lower() == '.rar':
+            # Move .rar file to ARCHIVE subfolder
+            archive_folder = job_path / 'ARCHIVE'
+            archive_folder.mkdir(parents=True, exist_ok=True)
+            shutil.move(str(archived_path), str(archive_folder / archived_path.name))
+        else:
+
+            with zipfile.ZipFile(archived_path, 'r') as zip_ref:
+                with ThreadPoolExecutor(max_workers = 200) as exe:
+                    for member in zip_ref.infolist():
+                            exe.submit(zip_ref.extract, member, temp_folder)
+                            extracted_size += member.file_size
+                            update_progress(extracted_size)
 
 def move_files(source: Path, destination: Path, extensions):
     for file in source.iterdir():
@@ -40,6 +49,7 @@ def move_files(source: Path, destination: Path, extensions):
 def index_temp(job_path: Path, temp_path: Path):
     extension_to_folder = {
         '.nc1': 'CNC',
+        '.nc': 'CNC',
         '.cnc': 'CNC',
         '.step': 'CNC',
         '.stp': 'CNC',
@@ -49,6 +59,7 @@ def index_temp(job_path: Path, temp_path: Path):
         '.rar': 'ZIP FILES',
         'master': 'SHIPPING AND BILLING',
         'billing': 'SHIPPING AND BILLING',
+        'material': 'MATERIAL',
         '.xlsx': 'EXCEL FILES',
         '.xlsm': 'EXCEL FILES',
         '.xls': 'EXCEL FILES',
@@ -74,6 +85,7 @@ def copy_exe_to_job_folder(job_path: Path):
 def organize_job(job_path: Path, subfolders_list):
     extension_to_folder = {
         '.nc1': 'CNC',
+        '.nc': 'CNC',
         '.cnc': 'CNC',
         '.step': 'CNC',
         '.stp': 'CNC',
@@ -83,6 +95,7 @@ def organize_job(job_path: Path, subfolders_list):
         '.rar': 'ZIP FILES',
         'master': 'SHIPPING AND BILLING',
         'billing': 'SHIPPING AND BILLING',
+        'material': 'MATERIAL',
         '.xlsx': 'EXCEL FILES',
         '.xlsm': 'EXCEL FILES',
         '.xls': 'EXCEL FILES',
@@ -93,7 +106,7 @@ def organize_job(job_path: Path, subfolders_list):
         if file.is_file() and file.suffix.lower() in ['.zip', '.rar']:
             print(f"Extracting '{file.name}'...")
             with tqdm(total=100, unit="B", unit_scale=True) as pbar:
-                extract_zip_archive_with_progress(file, job_path, pbar)
+                extract_archive_with_progress(file, job_path, pbar)
 
     index_temp(job_path, job_path / 'temp')
 
@@ -112,6 +125,14 @@ def organize_job(job_path: Path, subfolders_list):
     
     print(f"Copying 'nc1_drawing_remarks.exe' to '{job_path}'...")
     copy_exe_to_job_folder(job_path)
+
+def copy_material_spreadsheet(job_path: Path):
+    material_spreadsheet = Path('data/Material_Takeoff.xlsm')
+    if material_spreadsheet.exists():
+        print(f"Material_Takeoff.xlsm' to '{job_path}'...")
+        shutil.copy(material_spreadsheet, job_path.joinpath('MATERIAL'))
+    else:
+        print(f"Material spreadsheet '{material_spreadsheet}' not found.")
 
 def main(subfolders_list):
     scope = ['https://spreadsheets.google.com/feeds',
@@ -170,6 +191,8 @@ def main(subfolders_list):
         create_folders(job_folder, subfolders_list)
         print(f"Organizing job '{job_folder}'...")
         organize_job(job_folder, subfolders_list)
+        print(f"Copying material spreadsheet to '{job_folder}'...")
+        copy_material_spreadsheet(job_folder)
 
     print("Done.")
     input("Press Enter to exit...")

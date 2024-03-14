@@ -3043,9 +3043,9 @@
   ('httplib2\\cacerts.txt',
    'C:\\Users\\Austin\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\httplib2\\cacerts.txt',
    'DATA'),
-  ('certifi\\py.typed',
-   'C:\\Users\\Austin\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\certifi\\py.typed',
-   'DATA'),
   ('certifi\\cacert.pem',
    'C:\\Users\\Austin\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\certifi\\cacert.pem',
+   'DATA'),
+  ('certifi\\py.typed',
+   'C:\\Users\\Austin\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\certifi\\py.typed',
    'DATA')])

@@ -58,9 +58,16 @@ def edit_nc1(nc1_path, kss_line_data):
         except  ValueError:
             nc1_file.writelines(nc1_data)
             print("ERROR LOOKING UP PART.")
-
-        nc1_replace = str(nc1_lookup_value+"_DR"+str(kss_line_data[kss_return]).split(',')[1].replace("'","")).replace(" ","") # searches kss for nc1 file name 
-        # and returns the appropriate data. Then removes all quotation and spacing in string.
+        try:
+            if kss_return < len(kss_line_data) and nc1_lookup_value not in kss_line_data[kss_return]:
+                nc1_file.writelines(nc1_data)
+                return
+            
+            nc1_replace = str(nc1_lookup_value+"_DR"+str(kss_line_data[kss_return]).split(',')[1].replace("'","")).replace(" ","") # searches kss for nc1 file name 
+            # and returns the appropriate data. Then removes all quotation and spacing in string.
+        except IndexError:
+            nc1_file.writelines(nc1_data)
+            return
         try:
             nc1_data[4] = "  "+(nc1_replace)+"\n" # replaces data on line 5 with value found in kss file
             nc1_file.writelines(nc1_data) # writes new data to old nc1
@@ -77,8 +84,8 @@ def main():
     if getattr(sys, 'frozen', False):
         script_dir = os.path.dirname(sys.executable)  # Use this if running as a PyInstaller bundle
     else:
-        script_dir = os.path.dirname(os.path.realpath(__file__))  # Use this if running as a normal script
-
+        # script_dir = os.path.dirname(os.path.realpath(__file__))  # Use this if running as a normal script
+        script_dir = os.path.dirname("Y:/02 job files/pax/246-84/")
     # Change the current working directory to the script directory
     os.chdir(script_dir)
 
