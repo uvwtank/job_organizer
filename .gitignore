@@ -1,0 +1,15 @@
+# .gitignore
+/__pycache__/
+/.vscode/
+/build/
+/data/
+/dist/
+/temp/
+*.py
+*.xlsx
+*.xlsm
+*.spec
+*.json
+*.exe
+*Shortcut.lnk
+!job_organizer.py
