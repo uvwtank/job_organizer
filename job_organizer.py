@@ -237,7 +237,6 @@ def main(subfolders_list):
 
     base_directory = Path('Y:/02 Job Files')  # Change this to the base directory where the client folders are located
 
-
     # Fetch job list from Google Sheet
     #google_sheet_jobs = get_google_sheet_jobs(sheet)
 
@@ -265,7 +264,7 @@ def main(subfolders_list):
         job_name = row[job_column].strip() or "Reserve"
         bill_status = row[bill_status_colulmn].strip() or " "
 
-        if bill_status.lower() == "billed":
+        if bill_status.lower() == "billed" or bill_status.lower() == "pre billed":
             continue
 
         if due_date <= start_of_week:
